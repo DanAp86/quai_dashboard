@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quai Live Monitor</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-950 text-white font-sans p-6">
+    <div class="max-w-md mx-auto space-y-4">
+        <h1 class="text-xl font-black italic text-blue-500 uppercase tracking-tighter">Quai Live Monitor</h1>
+        
+        <div class="bg-slate-900 p-6 rounded-3xl border border-slate-800 shadow-2xl">
+            <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">Saldo em Carteira</p>
+            <div id="balance" class="text-3xl font-black text-green-400 font-mono italic">Buscando...</div>
+        </div>
+
+        <div class="bg-slate-900 p-4 rounded-2xl border border-slate-800/50">
+            <div class="flex justify-between items-center">
+                <span class="text-[10px] text-slate-500 font-bold uppercase">Status da Rede</span>
+                <span id="dot" class="h-2 w-2 bg-yellow-500 rounded-full animate-pulse"></span>
+            </div>
+            <p id="status" class="text-xs font-medium text-slate-400 mt-1 italic">Conectando à Blockchain...</p>
+        </div>
+    </div>
+
+    <script>
+        const wallet = "0x00222c20869Df2140c1c173010A0d550dB11B7fB";
+
+        async function getLive() {
+            const balDiv = document.getElementById('balance');
+            const statDiv = document.getElementById('status');
+            const dot = document.getElementById('dot');
+
+            try {
+                // Usando um proxy para evitar o "Erro na Rede" (CORS)
+                const proxy = "https://api.allorigins.win/get?url=";
+                const target = `https://prime.quaiscan.io/api/v2/addresses/${wallet}`;
+                
+                const response = await fetch(proxy + encodeURIComponent(target));
+                const wrapper = await response.json();
+                const data = JSON.parse(wrapper.contents);
+
+                if (data && data.coin_balance) {
+                    const finalBal = (parseFloat(data.coin_balance) / 1e18).toLocaleString('pt-BR', {minimumFractionDigits: 2});
+                    balDiv.innerText = finalBal + " QUAI";
+                    statDiv.innerText = "Sincronizado: " + new Date().toLocaleTimeString();
+                    dot.className = "h-2 w-2 bg-green-500 rounded-full";
+                }
+            } catch (err) {
+                console.error(err);
+                statDiv.innerText = "Rede instável. Tentando reconectar...";
+                dot.className = "h-2 w-2 bg-red-500 rounded-full animate-bounce";
+            }
+        }
+
+        // Atualiza a cada 30 segundos
+        setInterval(getLive, 30000);
+        getLive();
+    </script>
+</body>
+</html>
